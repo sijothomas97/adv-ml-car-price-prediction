@@ -1,0 +1,15 @@
+COL_REG_YEAR = 'year_of_registration'
+COL_REG_CODE = 'reg_code'
+COL_VHL_COND = 'vehicle_condition'
+COL_VHL_TYPE = 'crossover_car_and_van'
+COL_MILEAGE = 'mileage'
+COL_STD_COLR = 'standard_colour'
+COL_BD_TYPE = 'body_type'
+COL_FL_TYPE = 'fuel_type'
+COL_STD_MK = 'standard_make'
+COL_STD_MDL = 'standard_model'
+COL_AGE = 'age'
+VAL_USED = 'USED'
+VAL_NEW = 'NEW'
+
+FL_TYPE_LST = ['fuel_type_diesel_hybrid', 'fuel_type_bi_fuel', 'fuel_type_diesel_plug_in_hybrid']

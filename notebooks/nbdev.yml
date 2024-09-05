@@ -1,9 +1,0 @@
-project:
-  output-dir: _docs
-
-website:
-  title: "adv-ml-car-price-prediction"
-  site-url: "https://sijothomas97.github.io/adv-ml-car-price-prediction"
-  description: "An Advaned ML project to predict price of used cars from historic data."
-  repo-branch: master
-  repo-url: "https://github.com/sijothomas97/adv-ml-car-price-prediction"

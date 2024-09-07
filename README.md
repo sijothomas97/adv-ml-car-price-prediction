@@ -90,6 +90,3 @@ model.fit(X_train, y_train)
 ## License
 This project is licensed under the MIT License. See the LICENSE file for details.
 
-```
-
-This README provides a comprehensive overview of your project and guides users through installation, usage, and troubleshooting. Let me know if you need any further adjustments!

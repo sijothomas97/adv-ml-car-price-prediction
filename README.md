@@ -85,7 +85,7 @@ model.fit(X_train, y_train)
 - **Model Performance**: If the model performance is suboptimal, consider tuning the hyperparameters further or trying additional preprocessing steps.
 
 ## Contributors
-- **[Your Name]**: Project Lead and Developer.
+- **[sijothomas97]**: Project Lead and Developer.
 
 ## License
 This project is licensed under the MIT License. See the LICENSE file for details.

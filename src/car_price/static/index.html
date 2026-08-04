@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Used-car price estimator</title>
+  <style>
+    :root { color-scheme: light dark; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      max-width: 640px; margin: 2rem auto; padding: 0 1rem; line-height: 1.5;
+    }
+    h1 { font-size: 1.5rem; }
+    form { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem 1rem; }
+    label { display: flex; flex-direction: column; font-size: 0.85rem; gap: 0.25rem; }
+    input, select {
+      padding: 0.45rem 0.5rem; font-size: 1rem;
+      border: 1px solid #999; border-radius: 6px;
+    }
+    .full { grid-column: 1 / -1; }
+    button {
+      grid-column: 1 / -1; padding: 0.6rem; font-size: 1rem; cursor: pointer;
+      border: none; border-radius: 6px; background: #1a6feb; color: #fff;
+    }
+    button:disabled { opacity: 0.6; cursor: wait; }
+    #result { margin-top: 1.25rem; font-size: 1.1rem; min-height: 2rem; }
+    #result .price { font-size: 1.6rem; font-weight: 700; }
+    #result.error { color: #c0392b; }
+    .hint { color: #777; font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+  <h1>Used-car price estimator</h1>
+  <p class="hint">Enter the car's details and get an instant price estimate from the trained model.</p>
+  <form id="car-form">
+    <label>Make
+      <input name="standard_make" required value="BMW">
+    </label>
+    <label>Model
+      <input name="standard_model" required value="3 Series">
+    </label>
+    <label>Year of registration
+      <input name="year_of_registration" type="number" min="1950" required value="2018">
+    </label>
+    <label>Mileage
+      <input name="mileage" type="number" min="0" max="500000" required value="42000">
+    </label>
+    <label>Colour
+      <input name="standard_colour" required value="Black">
+    </label>
+    <label>Body type
+      <select name="body_type">
+        <option>Saloon</option><option>Hatchback</option><option>SUV</option>
+        <option>Estate</option><option>Coupe</option><option>Convertible</option>
+        <option>MPV</option><option>Pickup</option>
+      </select>
+    </label>
+    <label>Fuel type
+      <select name="fuel_type">
+        <option>Diesel</option><option>Petrol</option><option>Electric</option>
+        <option>Hybrid</option><option>Petrol Plug-in Hybrid</option>
+      </select>
+    </label>
+    <label>Condition
+      <select name="vehicle_condition">
+        <option>USED</option><option>NEW</option>
+      </select>
+    </label>
+    <label class="full" style="flex-direction: row; align-items: center;">
+      <input name="crossover_car_and_van" type="checkbox" style="width: auto;">
+      Crossover car / van
+    </label>
+    <button type="submit">Estimate price</button>
+  </form>
+  <div id="result" role="status"></div>
+
+  <script>
+    const form = document.getElementById("car-form");
+    const result = document.getElementById("result");
+    const button = form.querySelector("button");
+    const gbp = new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP", maximumFractionDigits: 0 });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const fd = new FormData(form);
+      const payload = {
+        standard_make: fd.get("standard_make"),
+        standard_model: fd.get("standard_model"),
+        standard_colour: fd.get("standard_colour"),
+        body_type: fd.get("body_type"),
+        fuel_type: fd.get("fuel_type"),
+        vehicle_condition: fd.get("vehicle_condition"),
+        year_of_registration: Number(fd.get("year_of_registration")),
+        mileage: Number(fd.get("mileage")),
+        crossover_car_and_van: fd.get("crossover_car_and_van") === "on",
+      };
+      button.disabled = true;
+      result.className = "";
+      result.textContent = "Estimating…";
+      try {
+        const res = await fetch("/predict", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          const detail = typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail);
+          throw new Error(detail || res.statusText);
+        }
+        result.innerHTML = `Estimated price: <span class="price">${gbp.format(data.predicted_price)}</span>` +
+          (data.mae ? `<div class="hint">Model: ${data.model_name} · typical error ± ${gbp.format(data.mae)}</div>` : "");
+      } catch (err) {
+        result.className = "error";
+        result.textContent = "Error: " + err.message;
+      } finally {
+        button.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

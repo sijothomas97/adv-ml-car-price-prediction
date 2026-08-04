@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "car-price"
+version = "0.1.0"
+description = "Used-car price prediction: training pipeline and model artifacts"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pandas==2.3.1",
+    "numpy==2.3.2",
+    "scikit-learn==1.7.1",
+    "joblib==1.5.1",
+    "fastapi==0.141.1",
+    "uvicorn==0.52.1",
+    "pydantic==2.13.4",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.4.1",
+    "ruff==0.12.7",
+    "httpx==0.28.1",
+]
+
+[project.scripts]
+car-price-train = "car_price.train:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+car_price = ["static/*.html"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+extend-exclude = ["notebooks", "*.ipynb"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP", "B", "SIM"]

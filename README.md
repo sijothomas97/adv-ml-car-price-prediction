@@ -46,20 +46,28 @@ Interactive docs: http://127.0.0.1:8000/docs
 ## Docker
 
 ```bash
-docker build -t car-price .
-docker run --rm -p 8000:8000 car-price
+scripts/build.sh          # trains models/model.joblib first if it's missing
+docker run --rm -p 8000:8000 car-price:local
 curl -s http://localhost:8000/health
 ```
 
 The image is a multi-stage build (build venv → slim runtime); it expects
-`models/model.joblib` and `models/metrics.json` to already exist (run
-`train.py` first — they are not trained inside the image).
+`models/model.joblib` and `models/metrics.json` to already exist. Use
+`scripts/build.sh` rather than a bare `docker build` on a fresh clone —
+it trains the artifact automatically when missing, instead of the
+`COPY` step failing opaquely.
 
-## CI
+## CI/CD
 
 `.github/workflows/ci.yml` runs on push/PR to `main`: `ruff check`, a smoke
 training run (`train.py --sample 3000`), `pytest`, a `docker build`, and a
 container smoke test against `/health` and `/predict`.
+
+On push to `main`, a `publish-image` job additionally pushes the image to
+`ghcr.io/<owner>/adv-ml-car-price-prediction` tagged `latest` and `<sha>`.
+A `deploy` job can then ship it to Fly.io (see `fly.toml`) — it stays a
+no-op until the repo variable `FLY_DEPLOY_ENABLED` is set to `true` and a
+`FLY_API_TOKEN` secret is added (see `fly.toml`'s header comment for setup).
 
 ## Layout
 

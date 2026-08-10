@@ -19,7 +19,8 @@ ENV PATH="/venv/bin:$PATH" \
 
 WORKDIR /app
 COPY --from=builder /venv /venv
-# Model artifact must exist (run `python train.py` before building)
+# Model artifact must exist before building -- use scripts/build.sh, which
+# trains one automatically if models/model.joblib is missing.
 COPY models/model.joblib models/metrics.json /app/models/
 
 RUN useradd --create-home appuser

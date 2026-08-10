@@ -7,8 +7,9 @@
 - [x] FastAPI `/predict` service + simple web UI
 - [x] Tests, pinned deps, lint
 - [x] Docker + GitHub Actions CI/CD
-- [ ] MLflow experiment tracking + DVC data versioning
-- [ ] Public live demo
+- [x] Git LFS for `data/csv/adverts.csv` (kept it out of raw git storage without needing a cloud DVC remote)
+- [ ] MLflow experiment tracking + DVC data/model versioning
+- [ ] Public live demo (scaffolded — `fly.toml` + CI `deploy` job, needs `FLY_API_TOKEN` + `FLY_DEPLOY_ENABLED`)
 
 ## Current state
 - `src/car_price/` is a clean, tested package: `data`, `preprocessing`, `pipeline`, `train` produce `models/model.joblib` (full sklearn `Pipeline`) + `models/metrics.json`.
@@ -28,7 +29,9 @@
 ## Latest tech to showcase
 - FastAPI + Pydantic v2 for a typed inference service.
 - MLflow (or Weights & Biases) for experiment tracking and model registry.
-- DVC for dataset/model versioning (the 32MB CSV should not live in git).
+- Git LFS for the 31MB CSV (chosen over DVC: LFS authenticates via the same
+  token `actions/checkout` already uses, so CI needs no extra cloud-storage
+  secret; DVC remains an option later for experiment/model-version tracking).
 - uv for fast, reproducible dependency management; ruff for linting.
 - Docker + GitHub Actions CI, deployed to Hugging Face Spaces / Render / Fly.io.
 

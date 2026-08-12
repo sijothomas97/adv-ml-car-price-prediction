@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint-test-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Install dependencies
+        run: |
+          uv venv -p 3.12 .venv
+          uv pip install -p .venv/bin/python -e ".[dev]"
+
+      - name: Lint (ruff)
+        run: .venv/bin/ruff check .
+
+      - name: Train smoke model (needed by tests + docker image)
+        run: .venv/bin/python train.py --model gbr --sample 3000
+
+      - name: Tests (pytest)
+        run: .venv/bin/python -m pytest
+
+      - name: Docker build
+        run: docker build -t car-price:ci .
+
+      - name: Smoke test container
+        run: |
+          docker run -d --rm -p 8000:8000 --name car-price-ci car-price:ci
+          for i in $(seq 1 20); do
+            curl -sf http://localhost:8000/health && break
+            sleep 1
+          done
+          curl -sf http://localhost:8000/health | grep '"model_loaded":true'
+          curl -sf -X POST http://localhost:8000/predict \
+            -H 'Content-Type: application/json' \
+            -d '{"mileage":42000,"year_of_registration":2019,"standard_make":"BMW","standard_model":"3 Series","standard_colour":"Black","body_type":"Saloon","fuel_type":"Diesel"}' \
+            | grep '"predicted_price"'
+          docker stop car-price-ci
+
+  publish-image:
+    needs: lint-test-build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/adv-ml-car-price-prediction:latest
+            ghcr.io/${{ github.repository_owner }}/adv-ml-car-price-prediction:${{ github.sha }}
+
+  deploy:
+    needs: publish-image
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.FLY_DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy to Fly.io
+        run: flyctl deploy --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

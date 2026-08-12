@@ -1,0 +1,33 @@
+# Fly.io app config. Provision once with:
+#   fly launch --no-deploy --copy-config --name adv-ml-car-price-prediction
+# (rename the app below if that name is taken), then set the printed FLY_API_TOKEN
+# as a GitHub Actions secret and the FLY_DEPLOY_ENABLED repo variable to "true"
+# to turn on the `deploy` job in .github/workflows/ci.yml.
+app = "adv-ml-car-price-prediction"
+primary_region = "lhr"
+
+[build]
+
+[env]
+  CAR_PRICE_MODEL_PATH = "/app/models/model.joblib"
+  CAR_PRICE_METRICS_PATH = "/app/models/metrics.json"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+[[http_service.checks]]
+  interval = "30s"
+  timeout = "3s"
+  grace_period = "10s"
+  method = "get"
+  path = "/health"
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1
